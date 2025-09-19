@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SF Airbnb Listings</title>
+    <style>
+        .listing {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ccc;
+        }
+        .listing h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        .listing .host {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Airbnb SF Listings</h1>
+        <nav>
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">About</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section class="listings">
+            <article class="listing">
+                <div id="listings_container">
+                </div>
+            </article>
+            <hr />
+        </section>
+    </main>
+
+    <footer>
+        <div>This is made by Chirag with ❤️</div>
+    </footer>
+    <script>
+
+// Simple AJAX fetch to load first 50 listings
+console.log('Script loaded!');
+
+async function loadListings() {
+    console.log('loadListings function called');
+    try {
+        console.log('Fetching data...');
+        const response = await fetch('/airbnb_sf_listings_500.json', {
+            mode: 'no-cors',
+        });
+        console.log('Response received:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const listings = await response.json();
+        console.log('Data parsed, found', listings.length, 'listings');
+        
+        const container = document.getElementById('listings_container');
+        console.log('Container found:', container);
+        
+        if (!container) {
+            throw new Error('Container not found');
+        }
+        
+        container.innerHTML = '';
+        
+        // Show only first 50 listings
+        const first50 = listings.slice(0, 50);
+        console.log('Showing first', first50.length, 'listings');
+        
+        first50.forEach((listing, index) => {
+            console.log('Creating listing', index + 1);
+            const listingDiv = document.createElement('div');
+            listingDiv.className = 'listing';
+            
+            // Parse amenities from JSON string
+            let amenities = [];
+            try {
+                amenities = JSON.parse(listing.amenities || '[]');
+            } catch (e) {
+                amenities = [];
+            }
+            
+            // Clean description (remove HTML tags)
+            const description = listing.description ? 
+                listing.description.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : 
+                'No description available';
+            
+            listingDiv.innerHTML = `
+                <h3>${listing.name || 'Untitled Listing'}</h3>
+                <img src="${listing.host_thumbnail_url || 'https://via.placeholder.com/30'}" alt="${listing.name}" height="100px" width="100px">
+                <h3 class="host_name">${listing.host_name || 'Unknown'}</h3>
+                <div class="price">${listing.price || '$0'}</div>
+                <div class="rating">Rating: ${listing.review_scores_rating || 'N/A'}</div>
+                <div class="description">${description}</div>
+                <div class="amenities">Amenities: ${amenities.slice(0, 5).join(', ')}</div>
+            `;
+            
+            container.appendChild(listingDiv);
+        });
+        
+        console.log('All listings added to page');
+        
+    } catch (error) {
+        console.error('Error loading listings:', error);
+        const container = document.getElementById('listings_container');
+        if (container) {
+            container.innerHTML = '<p>Error loading listings: ' + error.message + '</p>';
+        }
+    }
+}
+
+// Load listings when page loads
+console.log('Adding DOMContentLoaded listener');
+document.addEventListener('DOMContentLoaded', loadListings);
+
+    </script>
+</body>
+</html>
