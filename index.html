@@ -1,40 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SF Airbnb Listings</title>
-    <style>
-        .listing {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #ccc;
-        }
-        .listing h3 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin: 0;
-        }
-        .listing .host {
-            display: flex;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="/style.css">
 </head>
+
 <body>
     <header>
         <h1>Airbnb SF Listings</h1>
-        <nav>
-            <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">About</a></li>
-            </ul>
-        </nav>
+        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Animi molestias ullam temporibus nihil quaerat corrupti. Aperiam, minus. Sit, nam velit unde ratione doloribus, amet exercitationem delectus eligendi, minima voluptate omnis!
+        </p>
     </header>
     <main>
         <section class="listings">
-            <article class="listing">
+            <article>
                 <div id="listings_container">
                 </div>
             </article>
@@ -46,85 +29,131 @@
         <div>This is made by Chirag with ❤️</div>
     </footer>
     <script>
+        // Simple AJAX fetch to load first 50 listings
+        console.log('Script loaded!');
 
-// Simple AJAX fetch to load first 50 listings
-console.log('Script loaded!');
-
-async function loadListings() {
-    console.log('loadListings function called');
-    try {
-        console.log('Fetching data...');
-        const response = await fetch('/airbnb_sf_listings_500.json', {
-            mode: 'no-cors',
-        });
-        console.log('Response received:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const listings = await response.json();
-        console.log('Data parsed, found', listings.length, 'listings');
-        
-        const container = document.getElementById('listings_container');
-        console.log('Container found:', container);
-        
-        if (!container) {
-            throw new Error('Container not found');
-        }
-        
-        container.innerHTML = '';
-        
-        // Show only first 50 listings
-        const first50 = listings.slice(0, 50);
-        console.log('Showing first', first50.length, 'listings');
-        
-        first50.forEach((listing, index) => {
-            console.log('Creating listing', index + 1);
-            const listingDiv = document.createElement('div');
-            listingDiv.className = 'listing';
-            
-            // Parse amenities from JSON string
-            let amenities = [];
+        async function loadListings() {
+            console.log('loadListings function called');
             try {
-                amenities = JSON.parse(listing.amenities || '[]');
-            } catch (e) {
-                amenities = [];
+                console.log('Fetching data...');
+                const response = await fetch('/airbnb_sf_listings_500.json', {
+                    mode: 'no-cors',
+                });
+                console.log('Response received:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const listings = await response.json();
+                console.log('Data parsed, found', listings.length, 'listings');
+
+                const container = document.getElementById('listings_container');
+                console.log('Container found:', container);
+
+                if (!container) {
+                    throw new Error('Container not found');
+                }
+
+                container.innerHTML = '';
+
+                // Show only first 50 listings
+                const first50 = listings.slice(0, 50);
+                console.log('Showing first', first50.length, 'listings');
+
+                first50
+                    .reduce((acc, listing) => {
+
+                        const listingObj = {
+                            'name': listing.name,
+                            'host_name': listing.host_name,
+                            'price': listing.price,
+                            'review_scores_rating': listing.review_scores_rating,
+                            'description': listing.description,
+                            'amenities': listing.amenities,
+                            'picture_url': listing.picture_url,
+                            'listing_url': listing.listing_url,
+                            'host_picture_url': listing.host_picture_url
+                        };
+
+                        if (acc.length && acc[acc.length - 1].length < 3) {
+                            acc[acc.length - 1].push(listingObj);
+                        } else {
+                            acc.push([listingObj]);
+                        }
+
+                        return acc;
+                    }, [])
+                    .forEach((listing, index) => {
+                        console.log('Creating listing', index + 1);
+
+                        const listingRow = document.createElement('div');
+                        listingRow.className = 'listing_row';
+
+                        listing.forEach((listingObj) => {
+
+                            let amenities = [];
+                            try {
+                                amenities = JSON.parse(listingObj.amenities || '[]');
+                            } catch (e) {
+                                amenities = [];
+                            }
+
+                            const listingDiv = document.createElement('div');
+                            listingDiv.className = 'listing';
+
+                            const description = listingObj.description ?
+                                listingObj.description.replace(/<[^>]*>/g, '').substring(0, 150) + '...' :
+                                'No description available';
+
+                            listingDiv.innerHTML = `
+                                <a href="${listingObj.listing_url}" class="text-decoration-none" target="_blank" rel="noopener">
+                                    <img class="listing_image" src="${listingObj.picture_url || 'https://placeholders.io/400/300'}" alt="${listingObj.name}">
+                                </a>
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title mb-2">${listingObj.name || 'Untitled Listing'}</h5>
+                                    <div class="text-muted mb-2">
+                                        $${listingObj.price || '$0'}/night
+                                    </div>
+                                    <p class="listing_description">${description}</p>
+                                    <div class="d-flex flex-wrap gap-2 mb-3">
+                                        ${
+                                            amenities.slice(0, 5).map(amenity => `<span class="amenity_pill">${amenity}</span>`).join('')
+                                        }
+                                        ${
+                                            amenities.length > 5 ? `<span class="amenity_pill">+${amenities.length - 5} more</span>` : ''
+                                        }
+                                    </div>
+                                    <div class="small mt-auto pt-2 border-top d-flex align-items-center">
+                                        <span>
+                                            Host: <strong>${listingObj.host_name || 'Unknown'}</strong>
+                                            <img src="${listingObj.host_picture_url || 'https://placeholders.io/28/28'}" alt="${listingObj.host_name}" width="28" height="28" class="rounded-circle align-middle ms-2" loading="lazy">
+                                        </span>
+                                    </div>
+                                </div>
+                            `;
+
+                            listingRow.appendChild(listingDiv);
+                        });
+
+                        container.appendChild(listingRow);
+                    });
+
+                console.log('All listings added to page');
+
+            } catch (error) {
+                console.error('Error loading listings:', error);
+                const container = document.getElementById('listings_container');
+                if (container) {
+                    container.innerHTML = '<p>Error loading listings: ' + error.message + '</p>';
+                }
             }
-            
-            // Clean description (remove HTML tags)
-            const description = listing.description ? 
-                listing.description.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : 
-                'No description available';
-            
-            listingDiv.innerHTML = `
-                <h3>${listing.name || 'Untitled Listing'}</h3>
-                <img src="${listing.host_thumbnail_url || 'https://via.placeholder.com/30'}" alt="${listing.name}" height="100px" width="100px">
-                <h3 class="host_name">${listing.host_name || 'Unknown'}</h3>
-                <div class="price">${listing.price || '$0'}</div>
-                <div class="rating">Rating: ${listing.review_scores_rating || 'N/A'}</div>
-                <div class="description">${description}</div>
-                <div class="amenities">Amenities: ${amenities.slice(0, 5).join(', ')}</div>
-            `;
-            
-            container.appendChild(listingDiv);
-        });
-        
-        console.log('All listings added to page');
-        
-    } catch (error) {
-        console.error('Error loading listings:', error);
-        const container = document.getElementById('listings_container');
-        if (container) {
-            container.innerHTML = '<p>Error loading listings: ' + error.message + '</p>';
         }
-    }
-}
 
-// Load listings when page loads
-console.log('Adding DOMContentLoaded listener');
-document.addEventListener('DOMContentLoaded', loadListings);
-
+        // Load listings when page loads
+        console.log('Adding DOMContentLoaded listener');
+        document.addEventListener('DOMContentLoaded', loadListings);
     </script>
 </body>
+
 </html>
