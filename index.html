@@ -36,9 +36,8 @@
             console.log('loadListings function called');
             try {
                 console.log('Fetching data...');
-                const response = await fetch('/airbnb_sf_listings_500.json', {
-                    mode: 'no-cors',
-                });
+               const response = await fetch('/airbnb_sf_listings_500.json');
+
                 console.log('Response received:', response.status);
 
                 if (!response.ok) {
